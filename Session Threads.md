@@ -4,14 +4,14 @@ Upon Successful completion of this session the participants will be able to:
 
 - familiarize popular opensource tools for Data Analytics
 - Create a flexible document creation mechanism that supports daily academic business
-- learn basics of data analytics using R programming
+- learn basics of data analytics using R programing
 - create an exploratory article on Fault Detection in energy distribution
 
 ## Objectives of the Hands-on session
 
 - To Develop $\color{red}{\text{Actionable insights}}$ through data analytics 
 
-- To transform programming skill to process automation skill  
+- To transform programing skill to process automation skill  
 
 
 ## Outline of the session
@@ -26,13 +26,13 @@ Upon Successful completion of this session the participants will be able to:
 
 - Fundamental data analytics jobs for Engineers
 
-- Basic examples of process automation using `R Programming`
+- Basic examples of process automation using `R Programing`
 
 
 ## Invocation
 
 >**Problem:** National Board of Accreditation (NBA) promotes outcome based education.
-> As the first step towards this, course faculty is supposed to fix the target CO attainment level.
+> As the first step towards this, each course faculty is supposed to fix the target of CO attainment level.
 >  Suppose you are a first year faculty. You are directed to set your courses' target CO attainment level.
 >   How will you do this? 
 
