@@ -33,7 +33,7 @@ Upon Successful completion of this session the participants will be able to:
 
 >**Problem:** National Board of Accreditation (NBA) promotes outcome based education.
 > As the first step towards this, each course faculty is supposed to fix the target of CO attainment level.
->  Suppose you are a first year faculty. You are directed to set your courses' target CO attainment level.
+>  Suppose you are a first year faculty. You are directed to fix your courses' target CO attainment level.
 >   How will you do this? 
 
 
