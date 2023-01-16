@@ -2,12 +2,12 @@
 
 Upon Successful completion of this session the participants will be able to:
 
-- familiarize popular opensource tool for Data Analytics
-- Create a flexible document supporting daily academic business
+- familiarize popular opensource tools for Data Analytics
+- Create a flexible document creation mechanism that supports daily academic business
 - learn basics of data analytics using R programming
 - create an exploratory article on Fault Detection in energy distribution
 
-## Objective of the Hands-on session
+## Objectives of the Hands-on session
 
 - To Develop $\color{red}{\text{Actionable insights}}$ through data analytics 
 
