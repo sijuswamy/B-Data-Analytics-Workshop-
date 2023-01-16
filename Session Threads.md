@@ -1,4 +1,4 @@
-## Session outcome
+## Session outcomes
 
 Upon Successful completion of this session the participants will be able to:
 
