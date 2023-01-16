@@ -4,14 +4,14 @@ Upon Successful completion of this session the participants will be able to:
 
 - familiarize popular opensource tools for Data Analytics
 - Create a flexible document creation mechanism that supports daily academic business
-- learn basics of data analytics using R programing
+- learn basics of data analytics using R programming
 - create an exploratory article on Fault Detection in energy distribution
 
 ## Objectives of the Hands-on session
 
 - To Develop $\color{red}{\text{Actionable insights}}$ through data analytics 
 
-- To transform programing skill to process automation skill  
+- To transform programming skill to process automation skill  
 
 
 ## Outline of the session
@@ -26,7 +26,7 @@ Upon Successful completion of this session the participants will be able to:
 
 - Fundamental data analytics jobs for Engineers
 
-- Basic examples of process automation using `R Programing`
+- Basic examples of process automation using `R Programming`
 
 
 ## Invocation
