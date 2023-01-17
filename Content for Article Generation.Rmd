@@ -1,0 +1,947 @@
+---
+title: Fault Detection Using R Programming
+author:
+  - name: SIju Swamy
+    email: siju.swamy@saintgits.org
+    affiliation: Department of Mathematics
+    correspondingauthor: true
+    footnote: 1
+  - name: Arun Sebastian
+    email: arun.sebastian@saintgits.org
+    affiliation: Department of EEE
+  - name: Jisha James
+    email: jisha.james@saintgits.org
+    affiliation: Department of EEE
+    footnote: 2
+  - name: Polly Thomas
+    email: polly.thomas@saintgits.org
+    affiliation: Department of EEE
+    footnote: 2
+address:
+  - code: Saintgits College of Engineering (Autonomous)
+    address: Department of EEE, Pathamuttom, Kottayam, Kerala, 686532
+  - code: Another University
+    address: Department, Street, City, State, Zip
+footnote:
+  - code: 1
+    text: "Associated with Process Automation"
+  - code: 2
+    text: "Doctoral Fellow in CUSAT ."
+abstract: |
+  Modern society is to a larger and larger extent dependant on electric energy, and hence the reliance on and utilization of the electric grid is increasing steadily. At the same time the production and consumption patterns are changing from large centralized generation of electric power and pure consumers to distributed generation (DG) and more complex consumers.
+  
+    This transition causes higher stress on an aging infrastructure and major investments are required over the coming years to maintain a reliable supply of electric energy. Better monitoring solutions and predictive methods can increase the possible utilization of the existing grid and reduce the fault frequency. This paper presents some current challenges in the grid and a possible monitoring solution and fault prediction method. This is exemplified with statistics and field-measurements from the Norwegian power grid.
+keywords: 
+  - Electrical fault
+  - Machine Learning
+  - classification problem
+  - Logistic Regression
+  - EDA
+  - Statistical Analysis
+journal: "Journal of Applied Datascience"
+date: "`r Sys.Date()`"
+classoption: preprint, 3p, authoryear
+bibliography: mybibfile.bib
+linenumbers: false
+numbersections: true
+# csl: https://www.zotero.org/styles/elsevier-harvard
+output: 
+  bookdown::pdf_book:
+    base_format: rticles::elsevier_article
+    keep_tex: true
+    citation_package: natbib
+editor_options: 
+  chunk_output_type: console
+---
+
+
+# Bibliography styles
+
+Here are two sample references: @Feynman1963118 [@Dirac1953888].
+
+By default, natbib will be used with the `authoryear` style, set in `classoption` variable in YAML. 
+You can sets extra options with `natbiboptions` variable in YAML header. Example 
+```yaml
+natbiboptions: longnamesfirst,angle,semicolon
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(fig.width=5, fig.height=3) 
+```
+
+```{r}
+df=read.csv("https://raw.githubusercontent.com/sijuswamy/B-Data-Analytics-Workshop-/main/mycsvfile.csv")
+#df=read.csv("mycsvfile.csv",header=T)
+```
+
+
+```{r}
+library(ggplot2)
+library(plotly)
+library(dplyr)
+```
+## Introduction
+
+Maintenance and related activities have always played a role of primary importance within a production context. Over time, as the processing cycles are repeated, the machinery in the production system is subject to wear with a consequent loss of technical efficiency compared to optimal conditions [1,2].
+
+Maintenance, therefore, is of crucial importance in the industrial context, both to guarantee the continuity of processes and to ensure the safety of operators. This means ensuring maximum reliability and availability of the systems, supporting the minimum cost, and planning the necessary activities of both a technical and organizational nature, through the practical execution of the interventions. A maintenance policy is therefore essential for any production plant and, if implemented appropriately, can lead to the achievement of various objectives [3,4].
+
+Among these, it should be remembered that effective maintenance gives us an increase in plant productivity through the drastic reduction of machine downtime. Furthermore, a minimization of the costs related to the maintenance of the plant is achieved through an effective identification of the s spare parts, determining the correct management of the warehouse. Finally, as already mentioned, effective maintenance makes us safe from any accidents at work, guaranteeing the necessary safety of the operators working on the production line [5].
+
+Recently, industrial automation processes have seen an ever-increasing use of IIoT (Industrial Internet of Things) technologies [6]. With this acronym (IIoT) we refer to the connection between smart objects and smart grids. Smart objects can perform a series of activities - identification, localization, status diagnosis, data acquisition, processing, implementation, and communication - while smart grids are open, standard, and multifunctional [7]. This new way of conceiving the industrial process is part of the so-called Industry 4.0 according to which digital technologies such as IoT (Internet of Things) devices, but also sensors, cloud, machine learning, collaborative robotics, 3D printing, can increase the efficiency and the value of production by stimulating interconnection and cooperation between all resources [8]. Through their connection to the plants and instruments present in the supply chain, these technologies give the opportunity to process a huge amount of data in real time, contributing to the process's optimization, reducing waste of resources and errors, increasing business competitiveness [9]. The opportunities provided by these tools have led to the renewal and evolution of the industrial maintenance approach in many companies, which has taken on an increasingly complex and central role in the production context. In this way, we witnessed the transition from a preventive maintenance policy to a predictive one. The preventive approach is often disconnected from a temporal point of view to the actual conditions of the production plants, as it is unable to provide efficient management of the interventions, lacking a historical memory that is the basis of the decisions. Conversely, with a predictive approach, supported by the necessary sensors and data analysis methodologies, it can have a lot of constantly updated information, which acts as a support to optimize the times and resources [10].
+
+In this innovative context that has made available a large amount of data, the need to adopt data analysis methodologies that allow us to extract knowledge has become evident. When we deal with huge volumes of heterogeneous data, it is not easy to identify characteristics that can make the phenomenon we are observing more explanatory, at least it is not so for the human eye. In this regard, modern technologies based on artificial intelligence come to the rescue, which use algorithms based on machine learning to extract knowledge from data [11]. The information underlying the knowledge is extracted from the data which are explored and analyzed with techniques called Data Mining in search of recurring patterns or to discover hidden causal associations or relationships [12]. Machine learning overturns the traditional paradigm that draws an output from the input data and uses an algorithm that explains how to use it. In new systems, however, knowledge is an inductive process: the input is the data and, possibly, a first example of the expected output, so it will be the machine that will learn the algorithm to follow to obtain the same result [13].
+
+For the extraction of patterns, it is necessary to follow a process divided into various phases, called the knowledge discovery process, which initially starts with the selection of the data to be analyzed from the various available sources, such as data taken from databases [14]. Subsequently, a phase of fundamental importance for the final accuracy of the extracted patterns is passed, the preprocessing phase. In fact, this phase allows to improve the quality of the data, for example, by resolving eventually inconsistencies, by removing any anomalous data not useful for the analysis, so called because they differ from the rest of the data within the dataset, and by solving any conflicts present between the data after the integration of the different sources. This pre-processing phase is followed by a transformation phase that allows us to prepare the data for the next phase of Data Mining, thanks to which, as previously mentioned, it is possible to extract the patterns from the data by applying specific algorithms. Finally, after a phase of interpretation and evaluation of the extracted patterns, we move on to the final phase in which the final data of the analyzes are presented [15].
+
+In this work we will analyze and describe the most common methods based on Machine Learning for machine fault diagnosis. The paper is structured as follows: Section 2 describes in detail the most common failures affecting machines, analyzing their characteristics and peculiarities that make mathematical modeling extremely complex. Section 3 analyzes the most popular machine learning-based fault diagnosis methods. Finally, Section 4 summarizes the results obtained in applying these methods to real cases, highlighting their merits, and listing their limits.
+
+The use of electric power has been increasing over the last
+decades and is expected to further increase globally in both the
+short and long-term future [@alanzi2014detection]. At the same time the grid
+infrastructure in Europe is aging and changing towards a Smart
+Grid architecture [@aziz2012high], where there is more flexibility in the grid
+to meet varying demand. On the production side a substantial
+amount of intermittent energy sources such as PV and wind has
+been introduced into the energy mix, to some degree replacing
+controllable generation such as coal and nuclear-powered plants.
+On the consumption side the consumers have become more
+complex in their behaviour. Many modern electric appliances,
+such as induction heaters and chargers for electric vehicles (EV),
+have a more challenging consumption pattern than traditional
+appliances, which causes higher stress on the distribution grid.
+In addition, some end-users, previously considered pure
+consumers, have installed local generation capability and are at
+times net producers of electric energy termed prosumers.
+
+## Background
+
+The electrical power system consists of so many different complex dynamic and interacting elements, which are always prone to disturbance or an electrical fault. The use of high capacity electrical generating power plants and concept of grid, i.e. synchronized electrical power plants and geographical displaced grids, required fault detection and operation of protection equipment in minimum possible time so that the power system can remain in stable condition. The faults on electrical power system transmission lines are supposed to be first detected and then be classified correctly and should be cleared in least fast as possible time. The protection system used for a transmission line can also be used to initiate the other relays to protect the power system from outages. A good fault detection system provides an effective, reliable, fast and secure way of a relaying operation.
+
+The application of a pattern recognition technique could be useful in discriminating the faulty and healthy electrical power system. It also enables us to differentiate among three phases which phase of a three phase power system is experiencing a fault.
+
+## Introduction
+
+The transmission line is the most crucial part of the power system. The requirement of power and its allegiance has grown up exponentially over the modern era, and the prominent role of a transmission line is to transmit electric power from the source area to the distribution network. The electrical power system consists of so many complex dynamic and interacting elements that are always prone to disturbance or an electrical fault.
+
+> The power system consists of 4 generators of $11 × 10^3 V$, each pair located at each end of the transmission line. Transformers are present in between to simulate and study the various faults at the midpoint of the transmission line.
+
+### Electrical Faults
+
+Normally, a power system operates under balanced conditions. When the system becomes unbalanced due to the failures of insulation at any point or due to the contact of live wires, a short–circuit or fault, is said to occur in the line. Faults may occur in the power system due to the number of reasons like natural disturbances (lightning, high-speed winds, earthquakes), insulation breakdown, falling of a tree, bird shorting, etc.
+
+### Classification electrical faults
+
+Faults can be broadly categorised into two types:
+
+1. Open-circuit Fault: The open circuit fault mainly occurs because of the failure of one or two conductors. The open circuit fault takes place in series with the line, and because of this, it is also called the series fault. Such types of faults affect the reliability of the system. 
+
+2. Short-Circuit Faults: In this type of fault, the conductors of the different phases come into contact with each other with a power line, power transformer or any other circuit element due to which the large current flow in one or two phases of the system. The short-circuit fault is divided into the symmetrical and unsymmetrical fault.
+
+### Point of discussion
+
+In this article a detailed exploratory analysis of symmetrical fault. The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+### Dataset
+
+For this study a dataset containing load and voltage information of a power distribution system with fault information. First few rows of the dataset is shown in Table \@ref(tab:tab1).
+
+```{r tab1, echo=FALSE}
+knitr::kable(head(df), format = 'pandoc', caption = 'General struction of the data')
+```
+
+## Fault status in the data set
+
+As a first step of the analysis, the dataset is closely observed to identify the fault level. 
+
+### Ground Fault
+
+From the collected data, a count statistics of the ground fault is shown in Figure \@ref(fig:g-plot1).
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+```{r g-plot1,fig.align = 'center',  fig.cap = "Distribution of data points with Ground fault status "}
+ggplot(df, aes(x=G))+
+  geom_bar(stat="count",fill=c("red","green"))+
+  geom_text(aes(label = after_stat(count)), stat = "count", position = "fill")+
+  theme_minimal()
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+From \@ref(fig:g-plot1), the percentage of non-fault sample is $56.79$. So in the selected sample, more data favours non-fault status.
+
+### Line A fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+From the collected data, a count statistics of the Line A fault is shown in Figure \@ref(fig:g-plot2).
+
+```{r g-plot2,fig.align = 'center', out.width = "75%", fig.cap = "Distribution of data points with Line A fault status "}
+ggplot(df, aes(x=A))+
+  geom_bar(stat="count",fill=c("red","green"))+
+  geom_text(aes(label = after_stat(count)), stat = "count", position = "fill")+
+  theme_minimal()
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+From Figure \@ref(fig:g-plot2), the percentage of non-fault sample is only $42.85$. So in the selected sample, less data favours non-fault status in Line A.
+
+### Line B fault
+
+From the collected data, a count statistics of the Line B fault is shown in Figure \@ref(fig:g-plot3).
+
+```{r g-plot3,fig.align = 'center', out.width = "75%", fig.cap = "Distribution of data points with Line B fault status "}
+ggplot(df, aes(x=B))+
+  geom_bar(stat="count",fill=c("red","green"))+
+  geom_text(aes(label = after_stat(count)), stat = "count", position = "fill")+
+  theme_minimal()
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+From Figure \@ref(fig:g-plot3), the percentage of non-fault sample is only $44.44$. So in the selected sample, less data favours non-fault status in Line B.
+
+### Line C fault
+
+From the collected data, a count statistics of the Line B fault is shown in \@ref(fig:g-plot4).
+
+```{r g-plot4,fig.align = 'center', out.width = "75%", fig.cap = "Distribution of data points with Line C fault status "}
+ggplot(df, aes(x=C))+
+  geom_bar(stat="count",fill=c("red","green"))+
+  geom_text(aes(label = after_stat(count)), stat = "count", position = "fill")+
+  theme_minimal()
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+From Figure \@ref(fig:g-plot4), the percentage of non-fault sample is only $58.87$. So in the selected sample, more data favours non-fault status in Line C.
+
+
+## Coversion of the data to long format
+
+Since the first three columns of the data together indicate a type of symmetrical fault. So some data wrangling technique is to be used to convert the data into long format. Based on this wrnagled dataframe a combined fault status is summerized. First few rows of the long form data is shown in Table \@ref(tab:longf).
+
+```{r}
+library(reshape2)
+library(dplyr)
+data_long <- melt(df,
+        # ID variables - all the variables to keep but not split apart on
+    id.vars=c("Ia","Ib","Ic","Va","Vb","Vc"),
+        # The source columns
+    measure.vars=c("G", "C", "B","A"),
+        # Name of the destination column that will identify the original
+        # column that the measurement came from
+    variable.name="Fault_Location",
+    value.name="Fault"
+)
+#data_long <- arrange(data_long,data_long$Fault_Location, data_long$Fault)# to get a sorted view
+#data_long
+```
+
+```{r longf}
+knitr::kable(head(data_long),format = 'pandoc', caption = 'Structure of the long form data')
+```
+
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+A joint percentage analysis of the summary fault status is shown in Figure \@ref(fig:g-plot5).
+
+
+```{r g-plot5,fig.align = 'center', out.width = "75%", fig.cap = "Overall Distribution of Fault over Lines"}
+#gender-wise
+data_long$Fault=as.factor(data_long$Fault)
+library(ggplot2)
+data_long%>%
+  count(Fault_Location,Fault) %>%       
+  group_by(Fault_Location) %>%
+  mutate(pct= prop.table(n) * 100) %>%
+  ggplot() + aes(Fault_Location, pct, fill=Fault) +
+  geom_bar(stat="identity") +
+  ylab("Number of respondents") +
+  geom_text(aes(label=paste0(sprintf("%1.1f", pct),"%")),
+            position=position_stack(vjust=0.5)) +labs(x ="Fault Location", y = "Percentage",fill="Fault")+
+  theme_bw()
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+From Figure \@ref(fig:g-plot5), it is clear that Line A fault rate is found to be relatively small compared to other Lines.
+
+## Creating new variable to represents fault type
+
+```{r}
+df$Ftype=paste0(as.character(df$G),as.character(df$C),as.character(df$B),as.character(df$A))
+df$Fault_Cat <- plyr::mapvalues(df$Ftype, from = c("0000", "1001","0110","1011","0111","1111"), to = c('NO Fault', 'Line A to Ground Fault','Line B to Line C Fault','Line A Line B to Ground Fault','Line A Line B Line C','Line A Line B Line C to Ground Fault'))
+```
+```{r}
+d1=df[,c(-1,-2,-3,-4)]
+#head(d1)
+```
+```{r}
+#summary(d1)
+```
+A complete visualization of Load over three lines is shown in Figure \@ref(fig:g-plot6). The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r g-plot6,fig.align = 'center', out.width = "75%", fig.cap = "Load on Lines based on Data "}
+Xval=1:length(d1$Ia)
+gfg_plot <- ggplot() +  
+    geom_line(data=d1,aes(x=Xval,y = Ia, color = "Ia")) +
+     geom_line(data=d1,aes(x=Xval,y = Ib, color = "Ib"))+
+    geom_line(data=d1,aes(x=Xval,y = Ic, color = "Ic"))+scale_color_manual(name = "Line", values = c("Ia" = "darkblue", "Ib" = "red","Ic"="green")) +xlab("sample ")+ylab("Load")
+    gfg_plot
+```
+
+A complete picture of voltage across the Lines under investigation is shown in Figure \@ref(fig:g-plot7).
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r g-plot7,fig.align = 'center', out.width = "75%", fig.cap = "Voltage on Lines based on Data "}
+Xval=1:length(d1$Va)
+gfg_plot <- ggplot() +  
+    geom_line(data=d1,aes(x=Xval,y = Va, color = "Va")) +
+     geom_line(data=d1,aes(x=Xval,y = Vb, color = "Vb"))+
+    geom_line(data=d1,aes(x=Xval,y = Vc, color = "Vc"))+scale_color_manual(name = "Line", values = c("Va" = "darkblue", "Vb" = "red","Vc"="green")) +xlab("sample ")+ylab("Load")
+    gfg_plot
+```
+
+Based on the load and voltage distribution across the lines with Voltage or Current graph (from Figure \@ref(fig:g-plot6) and Figure \@ref(fig:g-plot7)), where there is large fluctuation in the graph, there faults have occurred. This observation visually validate the reliability of the data selected for the study.
+
+
+## Current status of Line A in terms of load and voltage
+
+A distribution analysis of voltage and load is conducted to validate the general structure of the data. Distribution of load and voltage over a fault presented Line A is shown in Figure \@ref(fig:g-plot8).
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r }
+p1=ggplot(d1, aes(x=Va)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+labs(title="Distribution of Voltage",x="Voltage ", y = "Density")
+p2=ggplot(d1, aes(x=Ia))+
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+ labs(title="Distribution of Load",x="Ia", y = "Density")
+p3=ggplot(d1, aes(x=Va)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+p4=ggplot(d1, aes(x=Ia)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+```
+
+```{r g-plot8,fig.align = 'center', out.width = "75%", fig.cap = "Load- Volatage status of Line A based on Data "}
+library(ggpubr)
+figure <- ggarrange(p1,p2,p3,p4,
+                    labels = c("A", "B", "C","D"),
+                    ncol = 2, nrow = 2)
+figure
+```
+
+
+## Current status of Line B in terms of Load and Voltage
+
+A distribution analysis of voltage and load is conducted to validate the general structure of the data. Distribution of load and voltage over a fault presented Line B is shown in Figure \@ref(fig:g-plot9). 
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r}
+p1=ggplot(d1, aes(x=Vb)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+labs(title="Distribution of Voltage",x="Voltage ", y = "Density")
+p2=ggplot(d1, aes(x=Ib))+
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+ labs(title="Distribution of Load",x="Ib", y = "Density")
+p3=ggplot(d1, aes(x=Vb)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+p4=ggplot(d1, aes(x=Ib)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+```
+
+```{r g-plot9,fig.align = 'center', out.width = "75%", fig.cap = "Load- Volatage status of Line B based on Data "}
+library(ggpubr)
+figure <- ggarrange(p1,p2,p3,p4,
+                    labels = c("A", "B", "C","D"),
+                    ncol = 2, nrow = 2)
+figure
+```
+
+
+
+## Current status of Line C in terms of Load and Voltage
+
+A distribution analysis of voltage and load is conducted to validate the general structure of the data. Distribution of load and voltage over a fault presented Line C is shown in Figure \@ref(fig:g-plot10). 
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r}
+p1=ggplot(d1, aes(x=Vc)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+labs(title="Distribution of Voltage",x="Voltage ", y = "Density")
+p2=ggplot(d1, aes(x=Ic))+
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+ labs(title="Distribution of Load",x="Ic", y = "Density")
+p3=ggplot(d1, aes(x=Vc)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+p4=ggplot(d1, aes(x=Ic)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+```
+
+```{r g-plot10,fig.align = 'center', out.width = "75%", fig.cap = "Load- Volatage status of Line A based on Data "}
+library(ggpubr)
+figure <- ggarrange(p1,p2,p3,p4,
+                    labels = c("A", "B", "C","D"),
+                    ncol = 2, nrow = 2)
+figure
+```
+
+## Exploratory Analysis of No Fault Distribution
+
+An exploratory analysis of the non-fault data is conducted to investigate the distrubution of load and voltage across the distribution system with three lines- Line A, Line B, and Line C.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+```{r}
+nofault=d1%>%filter(Fault_Cat=="NO Fault")
+Xval=1:length(nofault$Ia)
+```
+
+```{r g-plot11,fig.align = 'center', out.width = "75%", fig.cap = "Non fault Load status of Line A based on Data "}
+Xval=1:length(nofault$Ia)
+gfg_plot <- ggplot() +  
+    geom_line(data=nofault,aes(x=Xval,y = Ia, color = "Ia")) +
+     geom_line(data=nofault,aes(x=Xval,y = Ib, color = "Ib")) +
+    geom_line(data=nofault,aes(x=Xval,y = Ic, color = "Ic"))+scale_color_manual(name = "Line", values = c("Ia" = "darkblue", "Ib" = "red","Ic"="green")) +xlab("sample ")+ylab("Load")
+ gfg_plot
+```
+
+```{r g-plot12,fig.align = 'center', out.width = "75%", fig.cap = "Non fault Voltage status of Line A based on Data "}
+Xval=1:length(nofault$Va)
+gfg_plot <- ggplot() +  
+    geom_line(data=nofault,aes(x=Xval,y = Va, color = "Va")) +
+     geom_line(data=nofault,aes(x=Xval,y = Vb, color = "Vb")) +
+    geom_line(data=nofault,aes(x=Xval,y = Vc, color = "Vc"))+scale_color_manual(name = "Line", values = c("Va" = "darkblue", "Vb" = "red","Vc"="green")) +xlab("sample ")+ylab("Voltage")
+ gfg_plot
+```
+
+
+
+## Distribution of `non fault` voltage and Load
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault,
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+### Line A
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r}
+p1=ggplot(nofault, aes(x=Va)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+labs(title="Distribution of Voltage",x="Voltage ", y = "Density")
+p2=ggplot(nofault, aes(x=Ia))+
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+ labs(title="Distribution of Load",x="Ia", y = "Density")
+p3=ggplot(nofault, aes(x=Va)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+p4=ggplot(nofault, aes(x=Ia)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+```
+
+```{r g-plot13,fig.align = 'center', out.width = "75%", fig.cap = "Distribution of Load and Voltage Non-Fault Data on Line A "}
+library(ggpubr)
+figure <- ggarrange(p1,p2,p3,p4,
+                    labels = c("A", "B", "C","D"),
+                    ncol = 2, nrow = 2)
+figure
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+### Line B
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r}
+p1=ggplot(nofault, aes(x=Vb)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+labs(title="Distribution of Voltage",x="Voltage ", y = "Density")
+p2=ggplot(nofault, aes(x=Ib))+
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+ labs(title="Distribution of Load",x="Ib", y = "Density")
+p3=ggplot(nofault, aes(x=Vb)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+p4=ggplot(nofault, aes(x=Ib)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+```
+
+```{r g-plot14,fig.align = 'center', out.width = "75%", fig.cap = "Distribution of Load and Voltage Non-Fault Data on Line B "}
+library(ggpubr)
+figure <- ggarrange(p1,p2,p3,p4,
+                    labels = c("A", "B", "C","D"),
+                    ncol = 2, nrow = 2)
+figure
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+### Line C
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r}
+p1=ggplot(nofault, aes(x=Vc)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+labs(title="Distribution of Voltage",x="Voltage ", y = "Density")
+p2=ggplot(nofault, aes(x=Ic))+
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+ labs(title="Distribution of Load",x="Ic", y = "Density")
+p3=ggplot(nofault, aes(x=Vc)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+p4=ggplot(nofault, aes(x=Ic)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+```
+
+```{r g-plot15,fig.align = 'center', out.width = "75%", fig.cap = "Distribution of Load and Voltage Non-Fault Data on Line C "}
+library(ggpubr)
+figure <- ggarrange(p1,p2,p3,p4,
+                    labels = c("A", "B", "C","D"),
+                    ncol = 2, nrow = 2)
+figure
+```
+
+## Fault Analysis- Descriptive
+
+In this section a descriptive analysis of the Fault occurred in the given distribution system.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+### Objective 1: To study there is any significant difference in voltage and load in the lines 
+
+It is observed from the exploratory data analysis that there is a significant increase in the load and decrease in the voltage in the distribution line while a fault is detected. This observation validate the power distribution theory. Hence the content validity of the secondary data is established in a primary level. The EDA produces a primary intuition that there is a mismatch in the load boosting while fault is occurs. The descriptive summary of the load and voltage over lines with respect to fault type is shown in Table \@ref(tab:summary).
+
+```{r}
+library(reshape2)
+library(dplyr)
+Ftype_measures <- melt(d1,
+        # ID variables - all the variables to keep but not split apart on
+    id.vars=c("Ftype","Fault_Cat"),
+        # The source columns
+    measure.vars=c("Ia","Ib","Ic","Va","Vb","Vc"),
+        # Name of the destination column that will identify the original
+        # column that the measurement came from
+    variable.name="Measure",
+    value.name="Value"
+)
+#data_long <- arrange(data_long,data_long$Fault_Location, data_long$Fault)# to get a sorted view
+#data_long
+```
+
+The statistical summary of load and voltage over type of fault is shown in Table \@ref(tab:summary).
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r summary}
+library(dplyr)
+library(kableExtra)
+FSa=group_by(Ftype_measures, Fault_Cat,Measure) %>%
+  summarise(
+    count = n(),
+    mean = mean(Value
+, na.rm = TRUE),
+    sd = sd(Value
+, na.rm = TRUE)
+  )
+#Fsa=cbind.data.frame(FSa)
+knitr::kable(FSa, format = 'pandoc', caption = 'General struction of the data')
+#kable(FSa) %>%
+#  kable_styling(bootstrap_options = c("striped", "hover"),full_width = F,position = "center")
+#xtable::xtable(Fsa)
+```
+
+## Visualization 
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r g-plot16,fig.align = 'center', out.width = "75%", fig.cap = "Summary of Fault type distribution over load and voltage "}
+bp <- ggplot(Ftype_measures, aes(x=Fault_Cat, y=Value, group=Fault_Cat)) + 
+  geom_boxplot(aes(fill=Fault_Cat))
+bp +  facet_grid(Measure ~.)
+#p<-ggplot(Ftype_measures, aes(x=Fault_Cat, y=Value, fill=Measure)) +
+#  geom_boxplot(position=position_dodge(1))
+#p
+```
+
+From the Box plot, it is clear that , there is no significant variation in the range of load over fault type. 
+
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r}
+library(car)
+my_anova <- aov(Ia ~ Ftype, data = d1)
+#Anova(my_anova, type = "III")
+summary(my_anova)
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+## Trying significane of difference in $I_a$ over Fault type using $\chi^2$ test.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+Result of $\chi^2-$ analysis is shown in the following code-output.
+
+Since p-value is less than 0,05, there is no significance difference in the Load over Lines.
+
+
+```{r}
+chisq.test(d1$Ia,df$Fault_Cat)
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+##  Faulty System with Line A to Ground Fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r}
+Line_AG_Fault=d1%>%filter(Fault_Cat=="Line A to Ground Fault")
+Xval=1:length(Line_AG_Fault$Ia)
+```
+
+### Load
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r g-plot16a,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of loads while AG Fault occure "}
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_AG_Fault,aes(x=Xval,y = Ia, color = "Ia")) +
+     geom_line(data=Line_AG_Fault,aes(x=Xval,y = Ib, color = "Ib")) +
+    geom_line(data=Line_AG_Fault,aes(x=Xval,y = Ic, color = "Ic"))+scale_color_manual(name = "Line", values = c("Ia" = "darkblue", "Ib" = "red","Ic"="green")) +xlab("sample ")+ylab("Load")
+gfg_plot
+```
+
+### Voltage
+
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r g-plot17,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of voltage while AG Fault occure "}
+Xval=1:length(Line_AG_Fault$Va)
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_AG_Fault,aes(x=Xval,y = Va, color = "Va")) +
+     geom_line(data=Line_AG_Fault,aes(x=Xval,y = Vb, color = "Vb")) +
+    geom_line(data=Line_AG_Fault,aes(x=Xval,y = Vc, color = "Vc"))+scale_color_manual(name = "Line", values = c("Va" = "darkblue", "Vb" = "red","Vc"="green")) +xlab("sample ")+ylab("Voltage")
+gfg_plot
+```
+
+
+*At a time of Line A to ground fault the current in line A increases to 10 fold approximately 1000 Ampears form normal 100 Ampears and voltage reduced.*
+
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+## Faulty System with Line A ,Line B to Ground Fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r}
+Line_ABG_Fault=d1%>%filter(Fault_Cat=="Line A Line B to Ground Fault")
+Xval=1:length(Line_ABG_Fault$Ia)
+```
+```{r g-plot17a,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of loads while AGB Fault occure "}
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_ABG_Fault,aes(x=Xval,y = Ia, color = "Ia")) +
+     geom_line(data=Line_ABG_Fault,aes(x=Xval,y = Ib, color = "Ib")) +
+    geom_line(data=Line_ABG_Fault,aes(x=Xval,y = Ic, color = "Ic"))+scale_color_manual(name = "Line", values = c("Ia" = "darkblue", "Ib" = "red","Ic"="green")) +xlab("sample ")+ylab("Load")
+gfg_plot
+```
+
+### Voltage
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r g-plot18,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of voltage while AGB Fault occure "}
+Xval=1:length(Line_ABG_Fault$Va)
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_ABG_Fault,aes(x=Xval,y = Va, color = "Va")) +
+     geom_line(data=Line_ABG_Fault,aes(x=Xval,y = Vb, color = "Vb")) +
+    geom_line(data=Line_ABG_Fault,aes(x=Xval,y = Vc, color = "Vc"))+scale_color_manual(name = "Line", values = c("Va" = "darkblue", "Vb" = "red","Vc"="green")) +xlab("sample ")+ylab("Voltage")
+gfg_plot
+```
+
+*At a time of Line A Line B to ground fault the current in line A increases to 10 fold approximately 1000 Ampears form normal 100 Ampears and voltage reduced.*
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+## Faulty System with Line B to Line C
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r g-plot19,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of loads while AG Fault occure "}
+Line_BC_Fault=d1%>%filter(Fault_Cat=="Line B to Line C Fault")
+Xval=1:length(Line_BC_Fault$Ia)
+```
+```{r}
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_BC_Fault,aes(x=Xval,y = Ia, color = "Ia")) +
+     geom_line(data=Line_BC_Fault,aes(x=Xval,y = Ib, color = "Ib")) +
+    geom_line(data=Line_BC_Fault,aes(x=Xval,y = Ic, color = "Ic"))+scale_color_manual(name = "Line", values = c("Ia" = "darkblue", "Ib" = "red","Ic"="green")) +xlab("sample ")+ylab("Load")
+gfg_plot
+```
+
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+### Voltage
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r g-plot20,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of voltage while AG Fault occure "}
+Xval=1:length(Line_BC_Fault$Va)
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_BC_Fault,aes(x=Xval,y = Va, color = "Va")) +
+     geom_line(data=Line_BC_Fault,aes(x=Xval,y = Vb, color = "Vb")) +
+    geom_line(data=Line_BC_Fault,aes(x=Xval,y = Vc, color = "Vc"))+scale_color_manual(name = "Line", values = c("Va" = "darkblue", "Vb" = "red","Vc"="green")) +xlab("sample ")+ylab("Voltage")
+gfg_plot
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+## Faulty System with Line A - Line B - Line C
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r}
+Line_ABC_Fault=d1%>%filter(Fault_Cat=="Line A Line B Line C")
+Xval=1:length(Line_ABC_Fault$Ia)
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+### Load
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r g-plot21,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of load while AG Fault occure "}
+Xval=1:length(Line_ABC_Fault$Ia)
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_ABC_Fault,aes(x=Xval,y = Ia, color = "Ia")) +
+     geom_line(data=Line_ABC_Fault,aes(x=Xval,y = Ib, color = "Ib")) +
+    geom_line(data=Line_ABC_Fault,aes(x=Xval,y = Ic, color = "Ic"))+scale_color_manual(name = "Line", values = c("Ia" = "darkblue", "Ib" = "red","Ic"="green")) +xlab("sample ")+ylab("Voltage")
+gfg_plot
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+### Voltage
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r g-plot22,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of voltage while AG Fault occure "}
+Xval=1:length(Line_ABC_Fault$Va)
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_ABC_Fault,aes(x=Xval,y = Va, color = "Va")) +
+     geom_line(data=Line_ABC_Fault,aes(x=Xval,y = Vb, color = "Vb")) +
+    geom_line(data=Line_ABC_Fault,aes(x=Xval,y = Vc, color = "Vc"))+scale_color_manual(name = "Line", values = c("Va" = "darkblue", "Vb" = "red","Vc"="green")) +xlab("sample ")+ylab("Voltage")
+gfg_plot
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+## Faulty System with Line A - Line B - Line C - Ground
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+
+```{r}
+Line_ABCG_Fault=d1%>%filter(Fault_Cat=="Line A Line B Line C to Ground Fault")
+Xval=1:length(Line_ABCG_Fault$Ia)
+```
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+### Voltage
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r g-plot23,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of voltage while ABCG Fault occure "}
+Xval=1:length(Line_ABCG_Fault$Va)
+gfg_plot <- ggplot() +  
+    geom_line(data=Line_ABCG_Fault,aes(x=Xval,y = Va, color = "Va")) +
+     geom_line(data=Line_ABCG_Fault,aes(x=Xval,y = Vb, color = "Vb")) +
+    geom_line(data=Line_ABCG_Fault,aes(x=Xval,y = Vc, color = "Vc"))+scale_color_manual(name = "Line", values = c("Va" = "darkblue", "Vb" = "red","Vc"="green")) +xlab("sample ")+ylab("Voltage")
+gfg_plot
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+## Distribution of All Line Fault 
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+```{r }
+p1=ggplot(Line_ABCG_Fault, aes(x=Vb)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+labs(title="Distribution of Voltage",x="Voltage ", y = "Density")
+p2=ggplot(Line_ABCG_Fault, aes(x=Ib))+
+    geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+ labs(title="Distribution of Load",x="Ib", y = "Density")
+p3=ggplot(Line_ABCG_Fault, aes(x=Vb)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+p4=ggplot(Line_ABCG_Fault, aes(x=Ib)) + 
+  geom_boxplot(notch=F)#+ coord_flip()
+```
+
+```{r g-plot24,fig.align = 'center', out.width = "75%", fig.cap = "Comparison of load and voltage while all line Fault occure "}
+library(ggpubr)
+figure <- ggarrange(p1,p2,p3,p4,
+                    labels = c("A", "B", "C","D"),
+                    ncol = 2, nrow = 2)
+figure
+```
+The faults which involve all the three phases is known as the symmetrical fault. Such types of fault remain balanced even after the fault. The symmetrical faults mainly occur at the terminal of the generators. The fault on the system may arise on account of the resistance of the arc between the conductors or due to the lower footing resistance. The symmetrical fault is sub-categorized into line-to-line-to-line fault and three-phase line-to-ground-fault.
+
+The review of a substantial number of contributions, which have received the approval of the scientific community in terms of citations, has clearly outlined what the hotspots are and where the future challenges awaiting experts in the sector are headed.
+
+Machine learning-based methods require reliable data and correct labeling. In the case of fault diagnosis, this availability of information strongly depends on the sensors used for data collection and the labeling process. To improve the performance of these methodologies, it is therefore necessary to invest in the quality of sensors and in the labeling procedure, which requires substantial economic resources. On the other hand, the increasingly widespread availability of low-cost sensors that can be connected to the data network imposes a cost-benefit balance between systems that, using cutting-edge technologies, require excessive costs and systems that, based on economic sensors, return less precise results.
+
+Automated fault detection systems are highly dependent on feature selection, feature extraction, and data collection. Deep learning has been shown to yield excellent results in the automatic selection of features: This frees the researcher from the onerous task of identifying those features that best highlight the presence of anomalies in the behavior of the machine. On the other hand, the computational cost required by these algorithms, even if partially offset by the increase in performance offered by modern hardware platforms, represents a parameter to be evaluated in the choice of survey methodology.
+
+Most of the automatic fault identification systems we have analyzed treat the case as a supervised classification problem. The fault diagnosis process could instead be approached as a clustering problem. However, most current studies tend to address the problem by devising a pattern recognition system. In the future, research should be concentrated on developing suitable clustering. he availability of low-cost sensors that can be connected to each other through wireless networks according to modern IoT technologies offers the scientific community the opportunity to develop automatic fault detection that is increasingly within everyone's reach. These systems, therefore, will not only be developed for the detection of faults in the industrial environment but can be extended to local realities up to the needs of the individual user within their own home. Systems of this type can be offered together with home automation systems, offering new functions aimed at improving home security.
+
+
+The review of a substantial number of contributions, which have received the approval of the scientific community in terms of citations, has clearly outlined what the hotspots are and where the future challenges awaiting experts in the sector are headed.
+
+Machine learning-based methods require reliable data and correct labeling. In the case of fault diagnosis, this availability of information strongly depends on the sensors used for data collection and the labeling process. To improve the performance of these methodologies, it is therefore necessary to invest in the quality of sensors and in the labeling procedure, which requires substantial economic resources. On the other hand, the increasingly widespread availability of low-cost sensors that can be connected to the data network imposes a cost-benefit balance between systems that, using cutting-edge technologies, require excessive costs and systems that, based on economic sensors, return less precise results.
+
+Automated fault detection systems are highly dependent on feature selection, feature extraction, and data collection. Deep learning has been shown to yield excellent results in the automatic selection of features: This frees the researcher from the onerous task of identifying those features that best highlight the presence of anomalies in the behavior of the machine. On the other hand, the computational cost required by these algorithms, even if partially offset by the increase in performance offered by modern hardware platforms, represents a parameter to be evaluated in the choice of survey methodology.
+
+Most of the automatic fault identification systems we have analyzed treat the case as a supervised classification problem. The fault diagnosis process could instead be approached as a clustering problem. However, most current studies tend to address the problem by devising a pattern recognition system. In the future, research should be concentrated on developing suitable clustering. he availability of low-cost sensors that can be connected to each other through wireless networks according to modern IoT technologies offers the scientific community the opportunity to develop automatic fault detection that is increasingly within everyone's reach. These systems, therefore, will not only be developed for the detection of faults in the industrial environment but can be extended to local realities up to the needs of the individual user within their own home. Systems of this type can be offered together with home automation systems, offering new functions aimed at improving home security.
+
+## Conclusion
+
+In this review we have analyzed the Machine Learning based methods most widely used by the scientific community for diagnosing machine failures. For each type of methodology, we first provided the background necessary to understand the method and then we analyzed the most representative works that have yielded these techniques to identify failures in the industrial machine. The work carried out highlighted the strong use of these methods which confirms the extreme usefulness of these techniques in identifying failures in scenarios heavily contaminated by residual noise. The automatic extraction of knowledge today represents a valid tool for identifying faults: Technicians who must manage the maintenance of an industrial process must necessarily use these methods for a correct forecast of the mechanical parts to be replaced.
+
+In this paper we have studied the application of data analytics tools for the detection and classification of faults on a three phase transmission lines system. The method developed utilizes the three phase voltages and three phase currents as inputs to a Machine Learning algorithm. The inputs were normalized with respect to their pre-fault values respectively. All the symmetric faults-- line to ground,  line-to-line, double line-to-ground and symmetrical three phase faults can be studied using exploratory analytical techniques and finally ML models are used for fault classification with maximum accuracy.
+
+# References {-}
+
