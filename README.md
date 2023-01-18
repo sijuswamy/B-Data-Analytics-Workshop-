@@ -8,3 +8,6 @@ This repository contains source files for Big Data Analytics FDP.
 - Instructions to set-up a local connection to `spark` with in `RStudio`  <https://github.com/sijuswamy/B-Data-Analytics-Workshop-/blob/main/Sparkly%20local%20connection%20set-up.md>
 
 
+- Link to `Colab` file for predictive models with `Python`
+
+<https://colab.research.google.com/drive/1SngBWSA-5_XvDQ1KegpB_LTmZ2NDlTf5?usp=sharing>
