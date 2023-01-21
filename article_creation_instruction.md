@@ -7,6 +7,6 @@ remotes::install_github("rstudio/rticles")
 ```
 ## Step 2: Create a new R-Markdown file from template
 
-## Step 3: Run the new document created and verify that everythong work properly
+## Step 3: Run the new document created and verify that everything work properly
 
 ## Step 4: Update the document with your own content to get a camera- ready- document as per publishers' guidelines
